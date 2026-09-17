@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>BudEdit: Spatial Energy Budgets Stabilize One-Step Diffusion Editing</title>
+  <meta name="description" content="BudEdit identifies spatial energy misallocation as a measurable failure mode of one-step diffusion editing, and turns unreliable background residual energy into an image-dependent budget reallocated to edit-relevant regions.">
+  <meta name="keywords" content="One-step Diffusion Editing, Text-guided Image Editing, Energy Budgeting, Training-free, Inversion-free, SD-Turbo">
+  <meta name="author" content="Shengxiao Zhou, Lei Luo, Jian Yang">
+
+  <meta name="citation_title" content="Beyond Temporal Smoothing: Spatial Energy Budgets Stabilize One-Step Diffusion Editing">
+  <meta name="citation_author" content="Zhou, Shengxiao">
+  <meta name="citation_author" content="Luo, Lei">
+  <meta name="citation_author" content="Yang, Jian">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1.9.4/css/academicons.min.css">
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script defer id="mathjax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<!-- ============================== HERO ============================== -->
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Beyond Temporal Smoothing: Spatial Energy Budgets Stabilize One-Step Diffusion Editing</h1>
+          <div class="is-size-5 publication-authors compact-line">
+            <span class="author-block">
+              <a href="mailto:shengxiao.zhou@njust.edu.cn">Shengxiao Zhou</a>,
+            </span>
+            <span class="author-block">
+              <a href="mailto:cslluo@njust.edu.cn">Lei Luo</a><sup>*</sup>,
+            </span>
+            <span class="author-block">
+              <a href="mailto:csjyang@njust.edu.cn">Jian Yang</a>
+            </span>
+          </div>
+
+          <div class="is-size-6 publication-authors compact-line" style="margin-top: 0.2em;">
+            <span class="author-block">PCA Lab, School of Computer Science and Engineering, Nanjing University of Science and Technology</span>
+          </div>
+          <div class="is-size-6 publication-authors compact-line" style="margin-top: 0.1em;">
+            <span class="author-block"><sup>*</sup>Corresponding author</span>
+          </div>
+          <div class="is-size-6 publication-authors compact-line" style="margin-top: 0.1em;">
+            <span class="author-block">{shengxiao.zhou, cslluo, csjyang}@njust.edu.cn</span>
+          </div>
+
+          <div class="column has-text-centered" style="padding-top: 0.5rem;">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href="#" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="fab fa-github"></i></span>
+                  <span>Code (coming soon)</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="../iclr2027_paper_9.14_zsx.pdf" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="ai ai-arxiv" aria-hidden="true"></i></span>
+                  <span>Paper</span>
+                </a>
+              </span>
+            </div>
+          </div>
+
+          <div class="teaser-wipe-frame" style="margin-top: 3rem;">
+            <div class="teaser-wipe" id="teaser-wipe">
+              <div class="teaser-wipe-pair is-active" data-idx="0">
+                <div class="teaser-wipe-img-wrap">
+                  <img src="static/images/teaser/pair1_src.jpg" alt="Source: panda with closed mouth">
+                </div>
+                <img class="teaser-wipe-instr" src="static/images/teaser/pair1_instr.png" alt="Instruction: close to open mouth">
+                <div class="teaser-wipe-img-wrap">
+                  <img src="static/images/teaser/pair1_src.jpg" alt="Source (base)">
+                  <img class="teaser-wipe-target" src="static/images/teaser/pair1_tar.jpg" alt="Edited: panda with open mouth">
+                </div>
+              </div>
+              <div class="teaser-wipe-pair" data-idx="1">
+                <div class="teaser-wipe-img-wrap">
+                  <img src="static/images/teaser/pair2_src.jpg" alt="Source: cat with yellow eyes">
+                </div>
+                <img class="teaser-wipe-instr" src="static/images/teaser/pair2_instr.png" alt="Instruction: yellow to green eyes">
+                <div class="teaser-wipe-img-wrap">
+                  <img src="static/images/teaser/pair2_src.jpg" alt="Source (base)">
+                  <img class="teaser-wipe-target" src="static/images/teaser/pair2_tar.jpg" alt="Edited: cat with green eyes">
+                </div>
+              </div>
+              <div class="teaser-wipe-pair" data-idx="2">
+                <div class="teaser-wipe-img-wrap">
+                  <img src="static/images/teaser/pair3_src.jpg" alt="Source: squirrel on a fence">
+                </div>
+                <img class="teaser-wipe-instr" src="static/images/teaser/pair3_instr.png" alt="Instruction: squirrel to rabbit">
+                <div class="teaser-wipe-img-wrap">
+                  <img src="static/images/teaser/pair3_src.jpg" alt="Source (base)">
+                  <img class="teaser-wipe-target" src="static/images/teaser/pair3_tar.jpg" alt="Edited: rabbit on a fence">
+                </div>
+              </div>
+            </div>
+            <figcaption class="figure-caption mt-3">
+              <strong>One-step editing by BudEdit.</strong> It allocates an image-dependent energy budget within the effective injection support, preserving background fidelity while substantially strengthening the edit.
+            </figcaption>
+          </div>
+          <script>
+            (function () {
+              var root = document.getElementById('teaser-wipe');
+              var pairs = Array.prototype.slice.call(root.querySelectorAll('.teaser-wipe-pair'));
+              var n = pairs.length;
+              var current = 0;
+
+              function armTarget(pair) {
+                var t = pair.querySelector('.teaser-wipe-target');
+                t.style.transition = 'none';
+                t.style.clipPath = 'inset(0 0 100% 0)';
+                void t.offsetHeight;
+                t.style.transition = 'clip-path 1.4s ease-in-out';
+              }
+
+              function revealTarget(pair) {
+                var t = pair.querySelector('.teaser-wipe-target');
+                t.style.clipPath = 'inset(0 0 0 0)';
+              }
+
+              function showOnly(idx) {
+                pairs.forEach(function (p, i) {
+                  if (i === idx) {
+                    p.classList.add('is-active');
+                    armTarget(p);
+                  } else {
+                    p.classList.remove('is-active');
+                  }
+                });
+                current = idx;
+                setTimeout(function () { revealTarget(pairs[current]); }, 250);
+              }
+
+              function advance() {
+                showOnly((current + 1) % n);
+              }
+
+              armTarget(pairs[0]);
+              setTimeout(function () { revealTarget(pairs[0]); }, 250);
+              setInterval(advance, 3000);
+            })();
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== ABSTRACT ============================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            One-step text-guided diffusion editing is efficient but prone to spatially misallocated updates that distort the edited object and alter the background.
+            Existing methods often improve stability by averaging the editing field across timesteps.
+            We instead identify uncontrolled spatial energy allocation as a distinct and measurable failure mode: single-draw residual amplitudes are noise-sensitive, making the background field unsafe to transport directly but its total energy a usable per-image scale.
+            <strong>BudEdit</strong> turns that scale into an image-dependent budget and reallocates it to edit-relevant regions selected jointly by residual energy and cross-attention, controlling where editing energy is spent rather than averaging over timesteps.
+            The resulting training-free, inversion-free editor spends the budget on transport and reuses it to scale a gated refinement at a lower noise level, reusing cross-attention for localization at no additional UNet evaluation.
+            The budgeted injection field matches its image-dependent budget exactly and vanishes on the background support it identifies, by construction.
+            On PIE-Bench with SD-Turbo, BudEdit outperforms ChordEdit under each method's reported default settings on all 11 evaluated metrics, including a <strong>2.1&nbsp;dB</strong> gain in background PSNR, <strong>31%</strong> lower DINO, and <strong>36%</strong> lower LPIPS, while improving edited-region alignment and perceptual quality and reporting the lowest runtime in the comparison.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== MOTIVATION ============================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Motivation</h2>
+    <div class="columns is-vcentered motivation-split">
+      <div class="column is-half">
+        <div class="content has-text-justified is-size-6 motivation-points">
+          <ul>
+            <li>Distilled one-step generators (e.g. SD-Turbo) make real-time image editing practical, but a single large integration step remains unstable: the editing signal is a difference of two conditioned outputs, distorting the background.</li>
+            <li>Recent editors such as ChordEdit stabilize this by averaging the editing field across nearby timesteps, a purely temporal remedy. We ask instead: can the spatial distribution of the field be controlled explicitly?</li>
+            <li>Across two noise draws, the residual is essentially unrepeatable (cosine similarity &asymp; 0.1), so its raw amplitude is unsafe to transport, but its total energy is a stable scale. BudEdit turns this into an explicit spatial budget.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="column is-half">
+        <figure class="figure-block">
+          <img src="static/images/fig5_frontier.png" alt="BudEdit frontier plot on PIE-Bench">
+          <figcaption class="figure-caption">
+            <strong>One-step editors on PIE-Bench.</strong> Background PSNR vs. CLIP-D; bubble size = runtime. BudEdit leads on both axes and reports the lowest runtime among the compared one-step editors.
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== METHOD ============================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Method</h2>
+    <div class="content has-text-justified is-size-6">
+      <p>
+        BudEdit separates how much editing energy is administered from where and how it is spent. A residual-energy support and a cross-attention localization signal, both read off the same transport forward pass at no additional UNet evaluation, determine where the budget is allocated, while a constrained allocation problem determines how it is distributed.
+      </p>
+    </div>
+
+    <figure class="figure-block">
+      <img src="static/images/fig2_framework.png" alt="BudEdit framework overview">
+      <figcaption class="figure-caption">
+        <strong>Comparison of editing paradigms.</strong> BudEdit reallocates draw-sensitive residual energy within an attention-gated energy support, in contrast to temporal-smoothing approaches that average the field uniformly across timesteps.
+      </figcaption>
+    </figure>
+
+    <div class="content has-text-justified is-size-6 mt-5">
+      <p><strong>Harvesting the budget.</strong> The aggregate residual energy measured on the operational background support, the region outside the model's own thresholded energy support, sets an image-dependent budget $B = \beta E_{\mathrm{bg}}$. This is a measurement-derived scale, not a conserved quantity being transported: the construction matches this prescribed budget exactly, without assuming conservation of the measured background energy.</p>
+      <p><strong>Allocation as information projection.</strong> Within the effective injection support, where the residual-energy support meets a prompt-difference attention gate, the budget is distributed by solving a KL-projection problem in closed form. The resulting amplitude map matches the attention-derived allocation profile exactly while consuming exactly the prescribed budget, and vanishes everywhere on the background support by construction.</p>
+      <p><strong>Budget-aware gated refinement.</strong> A second, lower-noise pass then cleans up the transported image within an attention-derived gate: GatedRefine scales its correction by the same budget $B$, reinjects attenuated source-side high-frequency detail, and performs an attention-gated micro-swap near uncertain boundaries, restoring source detail without expanding the supported edit region.</p>
+    </div>
+
+    <div class="columns is-centered mt-4">
+      <div class="column is-four-fifths">
+        <figure class="figure-block">
+          <img src="static/images/fig3_energy.png" alt="BudEdit energy visualization">
+          <figcaption class="figure-caption">
+            <strong>Field energy visualization.</strong> Spatial energy is concentrated within the effective injection support and vanishes on the identified background support, illustrating the construction-level budget-matching and hard-support guarantees.
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== RESULTS ============================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Results</h2>
+
+    <div class="content has-text-justified is-size-6">
+      <p>
+        On <strong>PIE-Bench</strong> with SD-Turbo (700 images, 10 editing categories, one sampling step and two UNet evaluations), BudEdit is compared against multi-step, few-step, and one-step editors under each method's own reported default configuration.
+        Among <em>training-free one-step</em> editors, BudEdit leads all six background-fidelity metrics and both edited-region alignment metrics against ChordEdit, while reporting the lowest runtime (<strong>0.21s</strong>) in the comparison &mdash; a <strong>2.1&nbsp;dB</strong> PSNR gain, <strong>31%</strong> lower DINO, and <strong>36%</strong> lower LPIPS.
+      </p>
+    </div>
+
+    <div class="table-container academic-table-wrap">
+      <table class="table is-bordered is-narrow is-hoverable academic-table">
+        <thead>
+          <tr>
+            <th rowspan="2">Type</th>
+            <th rowspan="2">Method</th>
+            <th colspan="6" class="has-text-centered">Background</th>
+            <th colspan="5" class="has-text-centered">Edited</th>
+            <th colspan="2" class="has-text-centered">Properties</th>
+            <th colspan="4" class="has-text-centered">Efficiency</th>
+          </tr>
+          <tr>
+            <th>PSNR&uarr;</th><th>MSE&darr;</th><th>LPIPS&darr;</th><th>SSIM&uarr;</th><th>DINO&darr;</th><th>CLIP&uarr;</th>
+            <th>CLIP-W&uarr;</th><th>CLIP-E&uarr;</th><th>CLIP-D&uarr;</th><th>MUSIQ&uarr;</th><th>MUSIQ-E&uarr;</th>
+            <th>T-free</th><th>I-free</th>
+            <th>Step</th><th>NFE</th><th>Runtime(s)&darr;</th><th>VRAM(MB)&darr;</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td rowspan="4">Multi-step</td><td>SpotEdit</td><td>27.21</td><td>13.92</td><td>69.39</td><td>0.88</td><td>41.55</td><td>96.64</td><td>24.64</td><td>22.51</td><td>17.63</td><td>67.01</td><td>60.04</td><td>&#10003;</td><td>&#10003;</td><td>50</td><td>50</td><td>11.37</td><td>26384</td></tr>
+          <tr><td>FlowEdit</td><td>22.12</td><td>8.91</td><td>104.71</td><td>0.84</td><td>26.88</td><td>95.12</td><td>26.01</td><td>22.78</td><td>10.90</td><td>69.39</td><td>63.72</td><td>&#10003;</td><td>&#10003;</td><td>33</td><td>33</td><td>9.39</td><td>20180</td></tr>
+          <tr><td>KV-Edit</td><td>34.91</td><td>0.52</td><td>11.26</td><td>0.95</td><td>16.57</td><td>97.06</td><td>24.56</td><td>20.83</td><td>7.95</td><td>71.11</td><td>62.10</td><td>&#10003;</td><td>&#10003;</td><td>24</td><td>48</td><td>9.42</td><td>31618</td></tr>
+          <tr><td>PnPInversion</td><td>22.32</td><td>8.29</td><td>112.77</td><td>0.79</td><td>28.11</td><td>95.03</td><td>25.42</td><td>22.53</td><td>10.43</td><td>68.82</td><td>61.17</td><td>&#10003;</td><td>&#10007;</td><td>50</td><td>100</td><td>15.03</td><td>9290</td></tr>
+
+          <tr><td rowspan="3">Few-step</td><td>TurboEdit</td><td>22.55</td><td>9.25</td><td>101.93</td><td>0.80</td><td>29.87</td><td>95.24</td><td>26.54</td><td>23.04</td><td>14.62</td><td>71.11</td><td>63.83</td><td>&#10003;</td><td>&#10003;</td><td>4</td><td>4</td><td>0.91</td><td>19574</td></tr>
+          <tr><td>InstantEdit</td><td>28.61</td><td>2.79</td><td>45.21</td><td>0.87</td><td>12.72</td><td>97.41</td><td>24.89</td><td>21.93</td><td>13.06</td><td>67.38</td><td>60.41</td><td>&#10003;</td><td>&#10007;</td><td>4</td><td>8</td><td>0.84</td><td>7812</td></tr>
+          <tr><td>InfEdit</td><td>28.11</td><td>6.98</td><td>56.09</td><td>0.85</td><td>16.90</td><td>97.32</td><td>24.87</td><td>22.07</td><td>9.65</td><td>67.54</td><td>60.83</td><td>&#10003;</td><td>&#10003;</td><td>4</td><td>4</td><td>1.29</td><td>6794</td></tr>
+
+          <tr><td rowspan="5">One-step</td><td>SwiftEdit</td><td class="cell-second">24.22</td><td class="cell-best">5.41</td><td class="cell-best">76.39</td><td class="cell-best">0.82</td><td class="cell-best">15.14</td><td class="cell-best">96.34</td><td>24.48</td><td>21.54</td><td>7.56</td><td>66.52</td><td>60.05</td><td>&#10007;</td><td>&#10007;</td><td>1</td><td>2</td><td>0.45</td><td>19500</td></tr>
+          <tr><td>ChordEdit</td><td>22.63</td><td>7.98</td><td>122.66</td><td>0.77</td><td>28.81</td><td>95.04</td><td>24.83</td><td>22.15</td><td>10.72</td><td class="cell-second">67.21</td><td class="cell-second">60.19</td><td>&#10003;</td><td>&#10003;</td><td>1</td><td>2</td><td class="cell-second">0.26</td><td class="cell-second">7333</td></tr>
+          <tr><td>WhereEdit</td><td>24.05</td><td>7.97</td><td>108.22</td><td>0.80</td><td>31.03</td><td>94.93</td><td>25.18</td><td class="cell-best">22.66</td><td>10.78</td><td>64.28</td><td>56.39</td><td>&#10003;</td><td>&#10003;</td><td>1</td><td>3</td><td>0.29</td><td>7339</td></tr>
+          <tr><td>RRLS</td><td>23.92</td><td>6.27</td><td>111.40</td><td>0.81</td><td>25.07</td><td>95.21</td><td class="cell-best">25.38</td><td>22.09</td><td class="cell-second">11.47</td><td>65.90</td><td>57.79</td><td>&#10003;</td><td>&#10003;</td><td>1</td><td>4</td><td>0.52</td><td class="cell-second">7333</td></tr>
+          <tr class="highlight-row"><td><strong>BudEdit</strong></td><td class="cell-best"><strong>24.71</strong></td><td class="cell-second"><strong>5.54</strong></td><td class="cell-second"><strong>78.24</strong></td><td class="cell-best"><strong>0.82</strong></td><td class="cell-second"><strong>20.01</strong></td><td class="cell-second"><strong>96.17</strong></td><td class="cell-second"><strong>25.25</strong></td><td class="cell-second"><strong>22.52</strong></td><td class="cell-best"><strong>12.28</strong></td><td class="cell-best"><strong>67.77</strong></td><td class="cell-best"><strong>60.31</strong></td><td>&#10003;</td><td>&#10003;</td><td><strong>1</strong></td><td><strong>2</strong></td><td class="cell-best"><strong>0.21</strong></td><td class="cell-best"><strong>7319</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-scroll-hint has-text-centered">&larr; Scroll horizontally to see all columns &rarr;</p>
+    <p class="figure-caption has-text-centered">
+      <strong>Quantitative comparison on PIE-Bench.</strong> T-free: training-free. I-free: inversion-free. Best and second-best among one-step methods are highlighted in yellow and blue, ties included.
+    </p>
+
+    <figure class="figure-block mt-5">
+      <img src="static/images/fig6_comparison.png" alt="BudEdit qualitative comparison">
+      <figcaption class="figure-caption">
+        <strong>Qualitative comparison.</strong> BudEdit produces clearly delineated edits (e.g. a well-defined lion mane in latte art) while better preserving background surroundings (e.g. the plate and side dishes in the steak-to-salmon example) compared with representative baselines.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================== ABLATION ============================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Ablation Study</h2>
+    <div class="content has-text-justified is-size-6">
+      <p>
+        Ablations confirm that both the spatial reallocation mechanism and the second-pass cleanup are individually necessary and jointly complementary: reallocation alone can overlay target texture without fully completing the edit, cleanup alone yields only a slight structural change, and only the full configuration converts the edit coherently while preserving the background.
+      </p>
+    </div>
+
+    <div class="columns is-centered ablation-block">
+      <div class="column is-four-fifths">
+        <div class="table-container academic-table-wrap">
+          <table class="table is-bordered is-narrow is-hoverable academic-table">
+            <thead>
+              <tr><th>Config</th><th>PSNR&uarr;</th><th>MSE&darr;</th><th>CLIP-W&uarr;</th><th>CLIP-E&uarr;</th><th>MUSIQ-E&uarr;</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>&delta;=0</td><td>20.13</td><td>13.34</td><td>25.11</td><td class="cell-best">22.54</td><td>55.97</td></tr>
+              <tr><td>&delta;=0.15</td><td>22.63</td><td>7.98</td><td>24.83</td><td>22.15</td><td>60.19</td></tr>
+              <tr class="highlight-row"><td>BudEdit</td><td class="cell-best">24.71</td><td class="cell-best">5.54</td><td class="cell-best">25.25</td><td>22.52</td><td class="cell-best">60.31</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figure-caption ablation-caption has-text-centered">
+          <strong>ChordEdit temporal-window ablation.</strong> ChordEdit rows use $t_s{=}0.9$; BudEdit uses $t_s{=}0.78$.
+        </p>
+        <figure class="figure-block ablation-figure">
+          <img src="static/images/fig9_chordnaive.png" alt="ChordEdit window ablation">
+          <figcaption class="figure-caption ablation-caption">
+            <strong>ChordEdit window ablation.</strong> $\delta{=}0$ distorts the scene; BudEdit preserves scene and structure.
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="columns is-centered ablation-block">
+      <div class="column is-four-fifths">
+        <div class="table-container academic-table-wrap">
+          <table class="table is-bordered is-narrow is-hoverable academic-table">
+            <thead>
+              <tr><th>Energy</th><th>Cleanup</th><th>PSNR&uarr;</th><th>SSIM&uarr;</th><th>CLIP-E&uarr;</th><th>CLIP-D&uarr;</th><th>MUSIQ-E&uarr;</th><th>NFE&darr;</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>&#10007;</td><td>&#10007;</td><td class="cell-best">26.14</td><td class="cell-best">0.85</td><td>20.51</td><td>3.48</td><td>54.49</td><td class="cell-best">1</td></tr>
+              <tr><td>&#10003;</td><td>&#10007;</td><td>25.73</td><td>0.84</td><td>20.82</td><td>5.05</td><td>54.77</td><td class="cell-best">1</td></tr>
+              <tr><td>&#10007;</td><td>&#10003;</td><td>25.92</td><td>0.82</td><td>21.81</td><td>9.35</td><td>59.47</td><td>2</td></tr>
+              <tr class="highlight-row"><td>&#10003;</td><td>&#10003;</td><td>24.71</td><td>0.82</td><td class="cell-best">22.52</td><td class="cell-best">12.28</td><td class="cell-best">60.31</td><td>2</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figure-caption ablation-caption has-text-centered">
+          <strong>Factorial ablation of energy reallocation and cleanup.</strong> Bold marks column best.
+        </p>
+        <figure class="figure-block ablation-figure">
+          <img src="static/images/fig4_ablation.png" alt="BudEdit component ablation">
+          <figcaption class="figure-caption ablation-caption">
+            <strong>Qualitative and energy analysis.</strong> Injection: energy of the budgeted field; field energy: energy of the transport field.
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== CONCLUSION ============================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Conclusion</h2>
+    <div class="content has-text-justified is-size-6">
+      <p>
+        BudEdit identifies uncontrolled spatial energy allocation as a measurable failure mode of one-step diffusion editing, distinct from the temporal instability that prior work has targeted. By converting the total residual energy on the background support into an image-dependent budget, and allocating it via a closed-form information projection over an attention-gated support, BudEdit controls where editing energy is spent rather than only how much of it survives across timesteps. This training-free, inversion-free approach improves on all 11 evaluated PIE-Bench metrics over ChordEdit while reporting the lowest runtime among the compared one-step editors, and the budgeted injection field provably vanishes on the background support it identifies.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== BIBTEX ============================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">BibTeX</h2>
+    <div class="bibtex-wrap">
+      <button class="bibtex-copy-btn" id="bibtex-copy-btn" type="button">Copy</button>
+      <pre><code id="bibtex-code">@article{zhou2027budedit,
+  title   = {Beyond Temporal Smoothing: Spatial Energy Budgets Stabilize One-Step Diffusion Editing},
+  author  = {Zhou, Shengxiao and Luo, Lei and Yang, Jian},
+  journal = {arXiv preprint arXiv:2509.XXXXX},
+  year    = {2027}
+}</code></pre>
+    </div>
+    <script>
+      (function () {
+        var btn = document.getElementById('bibtex-copy-btn');
+        var code = document.getElementById('bibtex-code');
+        btn.addEventListener('click', function () {
+          navigator.clipboard.writeText(code.textContent).then(function () {
+            var original = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(function () { btn.textContent = original; }, 1500);
+          });
+        });
+      })();
+    </script>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <p>
+        This project page was adapted from the <a href="https://nerfies.github.io/" target="_blank">Nerfies</a> project page template, licensed under a
+        <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+      </p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

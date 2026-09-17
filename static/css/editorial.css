@@ -1,0 +1,330 @@
+/* ============================================================
+   BudEdit — Technical Editorial design system
+   Direction: refined, non-Anthropic-tell editorial minimalism.
+   Deep ink ground, cool paper surfaces, a single spectral-green
+   accent (echoing the paper's energy-field imagery), warm ochre
+   reserved strictly for best/second-best data highlights.
+   ============================================================ */
+
+@font-face {
+  font-family: 'EdSerif';
+  src: url('../fonts/AnthropicSerifWebText-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'EdSans';
+  src: url('../fonts/AnthropicSansWebText-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'EdMono';
+  src: url('../fonts/AnthropicMonoVariable-Regular.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --ink: #10140f;
+  --ink-soft: #2b3129;
+  --paper: #f3f1e9;
+  --paper-dim: #e9e6d9;
+  --line: rgba(16, 20, 15, 0.14);
+  --line-strong: rgba(16, 20, 15, 0.28);
+  --muted: #6b6f63;
+  --accent: #3f6b5c;
+  --accent-soft: #d8e3dd;
+  --best: #d8a24a;
+  --second: #7f9ea8;
+
+  --serif: 'EdSerif', 'Iowan Old Style', Georgia, serif;
+  --sans: 'EdSans', -apple-system, 'Helvetica Neue', sans-serif;
+  --mono: 'EdMono', 'SF Mono', 'IBM Plex Mono', monospace;
+
+  --content-max: 1180px;
+  --gap: clamp(4rem, 8vw, 7rem);
+  --pad: clamp(1.25rem, 5vw, 4rem);
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--ink); }
+
+body {
+  font-family: var(--serif) !important;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container.is-max-desktop {
+  max-width: var(--content-max) !important;
+  padding-left: var(--pad);
+  padding-right: var(--pad);
+}
+
+/* ---------------- Section rhythm: ink / paper alternation ---------------- */
+section.section {
+  background: var(--paper) !important;
+  padding: var(--gap) 0 !important;
+  position: relative;
+}
+section.section + section.section {
+  border-top: 1px solid var(--line);
+}
+section.section.ed-inverse {
+  background: var(--ink) !important;
+  color: var(--paper);
+}
+section.section.ed-inverse .title.is-3,
+section.section.ed-inverse strong,
+section.section.ed-inverse em {
+  color: var(--paper) !important;
+}
+section.section.ed-inverse p,
+section.section.ed-inverse .content {
+  color: rgba(243, 241, 233, 0.82);
+}
+section.section.ed-inverse .figure-caption {
+  color: rgba(243, 241, 233, 0.6) !important;
+  border-left-color: rgba(243, 241, 233, 0.3);
+}
+section.section.ed-inverse .figure-caption strong { color: var(--paper) !important; }
+section.section.ed-inverse .figure-block img { border-color: rgba(243, 241, 233, 0.2); }
+
+/* ---------------- Hero ---------------- */
+.hero {
+  background: var(--ink) !important;
+  color: var(--paper);
+  padding-bottom: 1rem;
+}
+.hero-body {
+  padding: clamp(3.5rem, 10vw, 6.5rem) var(--pad) clamp(2rem, 5vw, 3rem) !important;
+}
+.hero .container.is-max-desktop {
+  max-width: var(--content-max) !important;
+}
+.hero .columns.is-centered {
+  justify-content: flex-start !important;
+}
+.hero .column.has-text-centered {
+  text-align: left !important;
+}
+
+.publication-title {
+  font-family: var(--serif) !important;
+  font-weight: 400 !important;
+  -webkit-text-stroke: 0 !important;
+  letter-spacing: -0.015em !important;
+  color: var(--paper) !important;
+  font-size: clamp(2.1rem, 4.4vw, 3.4rem) !important;
+  line-height: 1.08 !important;
+  max-width: 18ch;
+  margin-bottom: 1.75rem !important;
+}
+
+.hero .publication-authors {
+  font-family: var(--mono) !important;
+  color: rgba(243, 241, 233, 0.7) !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0.02em;
+}
+.hero .publication-authors a {
+  color: var(--paper) !important;
+  border-bottom: 1px solid rgba(243, 241, 233, 0.35);
+  text-decoration: none;
+}
+.hero .publication-authors a:hover { border-color: var(--paper); }
+.hero .publication-authors.compact-line { margin-bottom: 0.35rem !important; }
+
+.hero .publication-links { justify-content: flex-start !important; }
+.hero .publication-links .button {
+  font-family: var(--mono) !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.04em;
+  border-radius: 3px !important;
+  background: transparent !important;
+  border: 1px solid rgba(243, 241, 233, 0.4) !important;
+  color: var(--paper) !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s, background 0.15s;
+}
+.hero .publication-links .button:hover {
+  border-color: var(--paper) !important;
+  background: rgba(243, 241, 233, 0.08) !important;
+}
+
+/* ---------------- Teaser ---------------- */
+.teaser-wipe-frame { margin: 2.5rem 0 0; text-align: left; max-width: 100%; }
+.teaser-wipe-frame .figure-caption {
+  font-family: var(--mono) !important;
+  color: rgba(243, 241, 233, 0.55) !important;
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+  max-width: 60ch;
+}
+.teaser-wipe-frame .figure-caption strong { color: rgba(243, 241, 233, 0.85) !important; }
+
+/* ---------------- Headings ---------------- */
+.title.is-3 {
+  font-family: var(--mono) !important;
+  font-weight: 500 !important;
+  -webkit-text-stroke: 0 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase;
+  font-size: 0.85rem !important;
+  color: var(--accent) !important;
+  text-align: left !important;
+  margin-bottom: 2.25rem !important;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line-strong);
+  display: block;
+}
+.title.is-3::before {
+  content: '';
+}
+
+/* ---------------- Editorial asymmetric grid ---------------- */
+.ed-split {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: start;
+}
+.ed-split.ed-split-reverse { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+.ed-split.ed-split-reverse .ed-split-text { order: 2; }
+.ed-split.ed-split-reverse .ed-split-media { order: 1; }
+@media (max-width: 900px) {
+  .ed-split, .ed-split.ed-split-reverse { grid-template-columns: 1fr; }
+  .ed-split.ed-split-reverse .ed-split-text,
+  .ed-split.ed-split-reverse .ed-split-media { order: initial; }
+}
+
+.content.has-text-justified {
+  text-align: left !important;
+  font-family: var(--serif) !important;
+  font-size: 1.02rem;
+  line-height: 1.68;
+  color: var(--ink-soft);
+  max-width: 62ch;
+}
+.content.has-text-justified.is-size-6 { font-size: 0.98rem; }
+.content p { margin-bottom: 1.1em; }
+.content strong { color: var(--ink); font-weight: 600; }
+.content em { font-style: italic; }
+
+/* inline math / mono tokens inside prose should read as data */
+.content .MathJax { color: var(--ink); }
+
+/* ---------------- Figures ---------------- */
+.figure-block { margin: 0; }
+.figure-block img {
+  width: 100%;
+  display: block;
+  border: 1px solid var(--line);
+}
+.figure-caption {
+  font-family: var(--mono) !important;
+  font-size: 0.74rem !important;
+  letter-spacing: 0.01em;
+  line-height: 1.55 !important;
+  color: var(--muted) !important;
+  text-align: left !important;
+  margin-top: 0.85rem !important;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--line-strong);
+}
+.figure-caption strong { color: var(--ink) !important; font-weight: 600; }
+
+.columns.is-centered { justify-content: flex-start !important; margin: 0 !important; }
+.columns.is-centered .column.is-four-fifths,
+.columns.is-centered .column.is-half {
+  padding: 0 !important;
+}
+
+/* ---------------- Academic table ---------------- */
+.academic-table-wrap {
+  overflow-x: visible !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  margin-top: 1.5rem;
+}
+.academic-table {
+  font-size: 0.62rem;
+  white-space: normal;
+  margin-bottom: 0;
+  width: 100%;
+  table-layout: fixed;
+  background: transparent !important;
+}
+.academic-table th {
+  font-family: var(--mono) !important;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  border-color: var(--line) !important;
+  background: transparent !important;
+}
+.academic-table td {
+  font-family: var(--mono) !important;
+  border-color: var(--line) !important;
+  background: transparent !important;
+}
+.academic-table th, .academic-table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 0.32em 0.15em;
+  word-break: break-word;
+}
+.academic-table td:nth-child(2), .academic-table th:nth-child(2) {
+  text-align: left;
+  font-family: var(--sans) !important;
+  font-weight: 500;
+}
+.academic-table.is-striped tbody tr:nth-child(even) td {
+  background: rgba(16, 20, 15, 0.025) !important;
+}
+.academic-table tr.highlight-row td {
+  border-top: 1px solid var(--line-strong) !important;
+  border-bottom: 1px solid var(--line-strong) !important;
+}
+.academic-table tr.highlight-row td:nth-child(1) strong { color: var(--accent); }
+.academic-table td.cell-best {
+  background: rgba(216, 162, 74, 0.22) !important;
+  color: var(--ink);
+  font-weight: 600;
+}
+.academic-table td.cell-second {
+  background: rgba(127, 158, 168, 0.22) !important;
+}
+.table-scroll-hint { display: none; }
+
+/* ---------------- BibTeX ---------------- */
+section.section pre {
+  background: var(--ink) !important;
+  color: var(--accent-soft) !important;
+  border-radius: 0;
+  font-family: var(--mono) !important;
+  font-size: 0.78rem;
+  padding: 1.5rem;
+  border: 1px solid var(--line-strong);
+  max-width: 62ch;
+}
+section.section pre code { background: transparent !important; color: inherit !important; }
+
+/* ---------------- Footer ---------------- */
+.footer {
+  background: var(--ink) !important;
+  color: rgba(243, 241, 233, 0.55);
+  font-family: var(--mono) !important;
+  font-size: 0.72rem;
+  padding: 2.5rem 0 !important;
+}
+.footer a { color: var(--accent-soft) !important; }
+
+/* ---------------- misc cleanup ---------------- */
+.has-text-centered { text-align: left !important; }
+h2.title.is-3.has-text-centered { text-align: left !important; }
