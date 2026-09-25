@@ -112,7 +112,7 @@
               </div>
             </div>
             <figcaption class="figure-caption mt-3">
-              <strong>One-step editing by BudEdit.</strong> It allocates an image-dependent energy budget within the effective injection support, preserving background fidelity while substantially strengthening the edit.
+              <strong>One-step editing by BudEdit.</strong> It converts background residual energy into a spatial budget and allocates the constructed injection only to edit-relevant regions for stronger, more coherent edits.
             </figcaption>
           </div>
           <script>
@@ -173,11 +173,11 @@
           <p>
             One-step text-guided diffusion editing is efficient but prone to spatially misallocated updates that distort the edited object and alter the background.
             Existing methods often improve stability by averaging the editing field across timesteps.
-            We instead identify uncontrolled spatial energy allocation as a distinct and measurable failure mode: single-draw residual amplitudes are noise-sensitive, making the background field unsafe to transport directly but its total energy a usable per-image scale.
-            <strong>BudEdit</strong> turns that scale into an image-dependent budget and reallocates it to edit-relevant regions selected jointly by residual energy and cross-attention, controlling where editing energy is spent rather than averaging over timesteps.
-            The resulting training-free, inversion-free editor spends the budget on transport and reuses it to scale a gated refinement at a lower noise level, reusing cross-attention for localization at no additional UNet evaluation.
-            The budgeted injection field matches its image-dependent budget exactly and vanishes on the background support it identifies, by construction.
-            On PIE-Bench with SD-Turbo, BudEdit outperforms ChordEdit under each method's reported default settings on all 11 evaluated metrics, including a <strong>2.1&nbsp;dB</strong> gain in background PSNR, <strong>31%</strong> lower DINO, and <strong>36%</strong> lower LPIPS, while improving edited-region alignment and perceptual quality and reporting the lowest runtime in the comparison.
+            We instead identify spatial energy misallocation as a distinct and measurable failure mode: across two independent noise draws, the residual field is essentially unrepeatable, making the background field unreliable for direct transport, while its total energy still sets a usable magnitude for the draw at hand.
+            <strong>BudEdit</strong> turns that magnitude into an explicit budget and reallocates it to edit-relevant regions selected jointly by residual energy and cross-attention, controlling where editing energy is spent rather than averaging over timesteps.
+            The resulting training-free, inversion-free editor spends the budget on transport and reuses it to scale a correction in a lower-noise gated refinement.
+            The budgeted injection field matches its prescribed budget exactly and vanishes on the identified background support, by construction.
+            On PIE-Bench with SD-Turbo, BudEdit outperforms ChordEdit under each method's reported default settings on all 11 evaluated metrics, including a <strong>2.1&nbsp;dB</strong> gain in background PSNR, <strong>31%</strong> lower DINO, and <strong>36%</strong> lower LPIPS, while improving all five editing-quality metrics and reporting the lowest runtime in the comparison.
           </p>
         </div>
       </div>
@@ -194,7 +194,7 @@
         <div class="content has-text-justified is-size-6 motivation-points">
           <ul>
             <li>Distilled one-step generators (e.g. SD-Turbo) make real-time image editing practical, but a single large integration step remains unstable: the editing signal is a difference of two conditioned outputs, distorting the background.</li>
-            <li>Recent editors such as ChordEdit stabilize this by averaging the editing field across nearby timesteps, a purely temporal remedy. We ask instead: can the spatial distribution of the field be controlled explicitly?</li>
+            <li>Recent editors such as ChordEdit stabilize this by averaging the editing field across nearby timesteps, a purely temporal remedy; WhereEdit infers an edit mask and amplifies conditional transport, and RRLS refines the transport with a Riemannian residual line search &mdash; neither controls where the single-draw field deposits its energy. We ask instead: can the spatial distribution of the field be controlled explicitly rather than averaged uniformly across timesteps?</li>
             <li>Across two noise draws, the residual is essentially unrepeatable (cosine similarity &asymp; 0.1), so its raw amplitude is unsafe to transport, but its total energy is a stable scale. BudEdit turns this into an explicit spatial budget.</li>
           </ul>
         </div>
@@ -224,22 +224,26 @@
     <figure class="figure-block">
       <img src="static/images/fig2_framework.png" alt="BudEdit framework overview">
       <figcaption class="figure-caption">
-        <strong>Comparison of editing paradigms.</strong> BudEdit reallocates draw-sensitive residual energy within an attention-gated energy support, in contrast to temporal-smoothing approaches that average the field uniformly across timesteps.
+        <strong>Comparison of editing paradigms.</strong> (a) multi-step editing buys stability by spreading the update over many small steps; (b) one-step editing integrates the measured field in a single large step; (c) chord transport forms the one-step update from a time-weighted average of residual fields at two timesteps; (d) energy transport converts background residual energy into a budget and spends it inside the effective injection support.
       </figcaption>
     </figure>
 
     <div class="content has-text-justified is-size-6 mt-5">
-      <p><strong>Harvesting the budget.</strong> The aggregate residual energy measured on the operational background support, the region outside the model's own thresholded energy support, sets an image-dependent budget $B = \beta E_{\mathrm{bg}}$. This is a measurement-derived scale, not a conserved quantity being transported: the construction matches this prescribed budget exactly, without assuming conservation of the measured background energy.</p>
+      <p><strong>Harvesting the budget.</strong> The aggregate residual energy measured on the operational background support, the region outside the model's own thresholded energy support, sets an image-dependent budget $B = \beta E_{\mathrm{bg}}$ with $\beta{=}4.0$ by default. This is a measurement-derived scale, not a conserved quantity being transported: the construction matches this prescribed budget exactly, without assuming conservation of the measured background energy. Because the budget sums rather than averages, it carries the area of the background support, so the mean injected energy density scales with that area relative to the injection support: a small target on a large canvas receives a denser correction.</p>
       <p><strong>Allocation as information projection.</strong> Within the effective injection support, where the residual-energy support meets a prompt-difference attention gate, the budget is distributed by solving a KL-projection problem in closed form. The resulting amplitude map matches the attention-derived allocation profile exactly while consuming exactly the prescribed budget, and vanishes everywhere on the background support by construction.</p>
-      <p><strong>Budget-aware gated refinement.</strong> A second, lower-noise pass then cleans up the transported image within an attention-derived gate: GatedRefine scales its correction by the same budget $B$, reinjects attenuated source-side high-frequency detail, and performs an attention-gated micro-swap near uncertain boundaries, restoring source detail without expanding the supported edit region.</p>
+      <p><strong>Budget-aware gated refinement.</strong> A second forward pass at a lower noise level, reusing the noise realization of the transport pass, cleans up the transported image. Within a cleanup gate &mdash; the thresholded, dilated second-pass attention readout intersected with the second-pass energy support &mdash; GatedRefine starts from the target-conditioned prediction, reinjects a fraction of the same budget $B$ as a residual correction, and applies a gated local extrapolation to recover reliable but under-edited content; a low-amplitude high-frequency source anchor and an attention-modulated micro-swap then restore local texture and stabilize uncertain structure. Final fusion with the source image is governed by an output gate that keeps the transport support admitted by second-pass attention and adds only extensions jointly supported by the second-pass residual and attention.</p>
+    </div>
+
+    <div class="content has-text-justified is-size-6 mt-5">
+      <p><strong>Localization derives from the model itself.</strong> The residual-energy mask and the edit-attention map intersect to form the derived mask; editing uses no external or human-annotated mask, and the GT mask above is included for visual comparison only. In the Overlap panel, green marks the common support of the derived mask and the GT mask, while red and blue mark regions selected by only one of them. The appendix reports the overlap between the derived support and the annotated region over all $700$ pairs.</p>
     </div>
 
     <div class="columns is-centered mt-4">
       <div class="column is-four-fifths">
         <figure class="figure-block">
-          <img src="static/images/fig3_energy.png" alt="BudEdit energy visualization">
+          <img src="static/images/fig3_energy.png" alt="BudEdit annotation-free localization">
           <figcaption class="figure-caption">
-            <strong>Field energy visualization.</strong> Spatial energy is concentrated within the effective injection support and vanishes on the identified background support, illustrating the construction-level budget-matching and hard-support guarantees.
+            <strong>Annotation-free localization.</strong> Two edits, from birds to origami birds and from a dog to a lion. The columns show the Real Image, Energy Mask, Edit-Attention Map, Derived Mask, GT Mask, Overlap, background energy, field energy of the composed transport field, and output.
           </figcaption>
         </figure>
       </div>
@@ -254,8 +258,10 @@
 
     <div class="content has-text-justified is-size-6">
       <p>
-        On <strong>PIE-Bench</strong> with SD-Turbo (700 images, 10 editing categories, one sampling step and two UNet evaluations), BudEdit is compared against multi-step, few-step, and one-step editors under each method's own reported default configuration.
-        Among <em>training-free one-step</em> editors, BudEdit leads all six background-fidelity metrics and both edited-region alignment metrics against ChordEdit, while reporting the lowest runtime (<strong>0.21s</strong>) in the comparison &mdash; a <strong>2.1&nbsp;dB</strong> PSNR gain, <strong>31%</strong> lower DINO, and <strong>36%</strong> lower LPIPS.
+        On <strong>PIE-Bench</strong> with SD-Turbo (700 images, 10 editing categories, all $512{\times}512$, seed fixed at 42 for all methods), BudEdit is compared against multi-step, few-step, and one-step editors under each method's own reported default configuration. Like ChordEdit, BudEdit uses one sampling step and two UNet evaluations, with $t_s{=}0.78$, $t_e{=}0.38$, $\alpha{=}0.7$ and $\beta{=}4.0$; runtimes are measured on an RTX 4090.
+        Among one-step methods, BudEdit achieves the highest PSNR, CLIP-D, MUSIQ and MUSIQ-E while using two UNet evaluations and reporting the lowest runtime of <strong>0.21&nbsp;s</strong> per image.
+        Among <em>training-free one-step</em> editors it leads all six background-fidelity metrics and exceeds ChordEdit on <strong>all five</strong> editing-quality metrics &mdash; a <strong>2.1&nbsp;dB</strong> background PSNR gain, <strong>31%</strong> lower DINO, and <strong>36%</strong> lower LPIPS &mdash; while SwiftEdit reaches its background numbers only with task-specific training.
+        The few-step and multi-step methods provide a broader quality&ndash;compute reference rather than a same-budget ablation: they use $4$&ndash;$100$ evaluations and report $0.84$&ndash;$15.03$&nbsp;s per image, compared with BudEdit's two evaluations and $0.21$&nbsp;s.
       </p>
     </div>
 
@@ -290,7 +296,7 @@
           <tr><td rowspan="5">One-step</td><td>SwiftEdit</td><td class="cell-second">24.22</td><td class="cell-best">5.41</td><td class="cell-best">76.39</td><td class="cell-best">0.82</td><td class="cell-best">15.14</td><td class="cell-best">96.34</td><td>24.48</td><td>21.54</td><td>7.56</td><td>66.52</td><td>60.05</td><td>&#10007;</td><td>&#10007;</td><td>1</td><td>2</td><td>0.45</td><td>19500</td></tr>
           <tr><td>ChordEdit</td><td>22.63</td><td>7.98</td><td>122.66</td><td>0.77</td><td>28.81</td><td>95.04</td><td>24.83</td><td>22.15</td><td>10.72</td><td class="cell-second">67.21</td><td class="cell-second">60.19</td><td>&#10003;</td><td>&#10003;</td><td>1</td><td>2</td><td class="cell-second">0.26</td><td class="cell-second">7333</td></tr>
           <tr><td>WhereEdit</td><td>24.05</td><td>7.97</td><td>108.22</td><td>0.80</td><td>31.03</td><td>94.93</td><td>25.18</td><td class="cell-best">22.66</td><td>10.78</td><td>64.28</td><td>56.39</td><td>&#10003;</td><td>&#10003;</td><td>1</td><td>3</td><td>0.29</td><td>7339</td></tr>
-          <tr><td>RRLS</td><td>23.92</td><td>6.27</td><td>111.40</td><td>0.81</td><td>25.07</td><td>95.21</td><td class="cell-best">25.38</td><td>22.09</td><td class="cell-second">11.47</td><td>65.90</td><td>57.79</td><td>&#10003;</td><td>&#10003;</td><td>1</td><td>4</td><td>0.52</td><td class="cell-second">7333</td></tr>
+          <tr><td>RRLS</td><td>23.92</td><td>6.27</td><td>111.40</td><td class="cell-second">0.81</td><td>25.07</td><td>95.21</td><td class="cell-best">25.38</td><td>22.09</td><td class="cell-second">11.47</td><td>65.90</td><td>57.79</td><td>&#10003;</td><td>&#10003;</td><td>1</td><td>4</td><td>0.52</td><td class="cell-second">7333</td></tr>
           <tr class="highlight-row"><td><strong>BudEdit</strong></td><td class="cell-best"><strong>24.71</strong></td><td class="cell-second"><strong>5.54</strong></td><td class="cell-second"><strong>78.24</strong></td><td class="cell-best"><strong>0.82</strong></td><td class="cell-second"><strong>20.01</strong></td><td class="cell-second"><strong>96.17</strong></td><td class="cell-second"><strong>25.25</strong></td><td class="cell-second"><strong>22.52</strong></td><td class="cell-best"><strong>12.28</strong></td><td class="cell-best"><strong>67.77</strong></td><td class="cell-best"><strong>60.31</strong></td><td>&#10003;</td><td>&#10003;</td><td><strong>1</strong></td><td><strong>2</strong></td><td class="cell-best"><strong>0.21</strong></td><td class="cell-best"><strong>7319</strong></td></tr>
         </tbody>
       </table>
@@ -303,7 +309,7 @@
     <figure class="figure-block mt-5">
       <img src="static/images/fig6_comparison.png" alt="BudEdit qualitative comparison">
       <figcaption class="figure-caption">
-        <strong>Qualitative comparison.</strong> BudEdit produces clearly delineated edits (e.g. a well-defined lion mane in latte art) while better preserving background surroundings (e.g. the plate and side dishes in the steak-to-salmon example) compared with representative baselines.
+        <strong>Qualitative comparison with the methods of the table above.</strong> Several baselines exhibit background color shifts, ghosting, or structural distortion, while BudEdit better preserves the source surroundings and produces detailed edits with clean boundaries, retaining the intended edit semantics throughout. In the lion latte-art example it yields a clearly delineated mane while preserving the cup and table appearance of the source; in the steak-to-salmon example it preserves the dark plate and side dishes.
       </figcaption>
     </figure>
   </div>
@@ -315,7 +321,10 @@
     <h2 class="title is-3 has-text-centered">Ablation Study</h2>
     <div class="content has-text-justified is-size-6">
       <p>
-        Ablations confirm that both the spatial reallocation mechanism and the second-pass cleanup are individually necessary and jointly complementary: reallocation alone can overlay target texture without fully completing the edit, cleanup alone yields only a slight structural change, and only the full configuration converts the edit coherently while preserving the background.
+        <strong>Comparison with chord transport.</strong> Disabling ChordEdit's chord window ($\delta{=}0$) raises CLIP-E from $22.15$ to $22.54$, but lowers MUSIQ-E from $60.19$ to $55.97$ and background PSNR from $22.63$ to $20.13$&nbsp;dB, and the window-off outputs show visible background and structural distortion. CLIP-E alone therefore does not fully reflect edit quality, which is why MUSIQ-E is reported as a complementary measure of edited-region perceptual quality. Without relying on temporal smoothing, BudEdit improves all five metrics over ChordEdit's smoothed default; against the window-off row it gives up only $0.02$ CLIP-E while improving background PSNR by $4.58$&nbsp;dB and MUSIQ-E by $4.34$ points.
+      </p>
+      <p>
+        <strong>Matched effective timestep.</strong> ChordEdit's default window assigns six sevenths of its weight to $t_s-\delta$, so with $t_s{=}0.9$ and $\delta{=}0.15$ its weighted-average time is $t_s-6\delta/7=0.771$, close to BudEdit's direct timestep $t_s{=}0.78$. This is consistent with temporal smoothing shifting ChordEdit toward a lower effective timestep, while the mechanisms remain different: ChordEdit averages fields globally over time, whereas BudEdit evaluates directly at $t_s{=}0.78$ and controls the trade-off through spatial energy budgeting.
       </p>
     </div>
 
@@ -334,15 +343,21 @@
           </table>
         </div>
         <p class="figure-caption ablation-caption has-text-centered">
-          <strong>ChordEdit temporal-window ablation.</strong> ChordEdit rows use $t_s{=}0.9$; BudEdit uses $t_s{=}0.78$.
+          <strong>ChordEdit chord window ablation.</strong> $\delta{=}0.15$ is the default; $\delta{=}0$ disables the window.
         </p>
         <figure class="figure-block ablation-figure">
           <img src="static/images/fig9_chordnaive.png" alt="ChordEdit window ablation">
           <figcaption class="figure-caption ablation-caption">
-            <strong>ChordEdit window ablation.</strong> $\delta{=}0$ distorts the scene; BudEdit preserves scene and structure.
+            <strong>ChordEdit window ablation.</strong> ChordEdit with $\delta{=}0$ distorts the scene; BudEdit preserves the scene.
           </figcaption>
         </figure>
       </div>
+    </div>
+
+    <div class="content has-text-justified is-size-6">
+      <p>
+        <strong>Component ablations.</strong> Setting $\beta{=}0$ drops the budgeted injection field $f^{\star}$ from the composed field, leaving only the attenuated residual term; disabling cleanup drops the second UNet evaluation, halving NFE. Each factor helps alone: energy reallocation alone raises CLIP-E/CLIP-D by $0.31$/$1.57$ without cleanup, while cleanup gives the larger editing-quality gain, $+1.30$/$+5.87$ and $+1.08$ CLIP-W. They also interact &mdash; with cleanup on, the reallocation gains grow to $0.71$/$2.93$ &mdash; and the full configuration attains the best CLIP-W, CLIP-E and CLIP-D. Transporting less energy changes the background less, so the no-energy, no-cleanup setting holds the highest PSNR and SSIM. In the <em>office chair</em> $\to$ <em>straw chair</em> edit, budgeted energy reallocation alone overlays straw texture on the cushion, cleanup alone yields only a slight change to the armrests, and only the full configuration converts the chair coherently.
+      </p>
     </div>
 
     <div class="columns is-centered ablation-block">
@@ -350,25 +365,62 @@
         <div class="table-container academic-table-wrap">
           <table class="table is-bordered is-narrow is-hoverable academic-table">
             <thead>
-              <tr><th>Energy</th><th>Cleanup</th><th>PSNR&uarr;</th><th>SSIM&uarr;</th><th>CLIP-E&uarr;</th><th>CLIP-D&uarr;</th><th>MUSIQ-E&uarr;</th><th>NFE&darr;</th></tr>
+              <tr><th>Energy</th><th>Cleanup</th><th>PSNR&uarr;</th><th>SSIM&uarr;</th><th>CLIP-W&uarr;</th><th>CLIP-E&uarr;</th><th>CLIP-D&uarr;</th><th>NFE&darr;</th></tr>
             </thead>
             <tbody>
-              <tr><td>&#10007;</td><td>&#10007;</td><td class="cell-best">26.14</td><td class="cell-best">0.85</td><td>20.51</td><td>3.48</td><td>54.49</td><td class="cell-best">1</td></tr>
-              <tr><td>&#10003;</td><td>&#10007;</td><td>25.73</td><td>0.84</td><td>20.82</td><td>5.05</td><td>54.77</td><td class="cell-best">1</td></tr>
-              <tr><td>&#10007;</td><td>&#10003;</td><td>25.92</td><td>0.82</td><td>21.81</td><td>9.35</td><td>59.47</td><td>2</td></tr>
-              <tr class="highlight-row"><td>&#10003;</td><td>&#10003;</td><td>24.71</td><td>0.82</td><td class="cell-best">22.52</td><td class="cell-best">12.28</td><td class="cell-best">60.31</td><td>2</td></tr>
+              <tr><td>&#10007;</td><td>&#10007;</td><td class="cell-best">26.14</td><td class="cell-best">0.85</td><td>23.51</td><td>20.51</td><td>3.48</td><td class="cell-best">1</td></tr>
+              <tr><td>&#10003;</td><td>&#10007;</td><td>25.73</td><td>0.84</td><td>23.73</td><td>20.82</td><td>5.05</td><td class="cell-best">1</td></tr>
+              <tr><td>&#10007;</td><td>&#10003;</td><td>25.92</td><td>0.83</td><td>24.59</td><td>21.81</td><td>9.35</td><td>2</td></tr>
+              <tr class="highlight-row"><td>&#10003;</td><td>&#10003;</td><td>24.71</td><td>0.82</td><td class="cell-best">25.25</td><td class="cell-best">22.52</td><td class="cell-best">12.28</td><td>2</td></tr>
             </tbody>
           </table>
         </div>
         <p class="figure-caption ablation-caption has-text-centered">
-          <strong>Factorial ablation of energy reallocation and cleanup.</strong> Bold marks column best.
+          <strong>Factorial ablation of energy reallocation and cleanup.</strong> Highlighted cells mark column best.
         </p>
         <figure class="figure-block ablation-figure">
           <img src="static/images/fig4_ablation.png" alt="BudEdit component ablation">
           <figcaption class="figure-caption ablation-caption">
-            <strong>Qualitative and energy analysis.</strong> Injection: energy of the budgeted field; field energy: energy of the transport field.
+            <strong>Qualitative and energy analysis.</strong> Injection: energy of $f^{\star}$; field energy: energy of the transport field. Heatmaps use the full configuration.
           </figcaption>
         </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== GENERALIZATION ============================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Cross-Dataset and Cross-Backbone Analysis</h2>
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+        <div class="content has-text-justified is-size-6">
+          <p>
+            The comparison crosses two datasets, PIE-Bench and the multi-aspect PIE-Bench++ of ParallelEdits, with two one-step backbones, SD-Turbo and SwiftBrushV2, using the same hyperparameters throughout. BudEdit achieves the best background preservation and editing quality across all four settings, improving background PSNR by over $2$&nbsp;dB. The appendix reports all eleven metrics.
+          </p>
+        </div>
+        <div class="table-container academic-table-wrap">
+          <table class="table is-bordered is-narrow is-hoverable academic-table">
+            <thead>
+              <tr>
+                <th rowspan="2">Dataset</th><th rowspan="2">Backbone</th>
+                <th colspan="2" class="has-text-centered">PSNR&uarr;</th>
+                <th colspan="2" class="has-text-centered">CLIP-E&uarr;</th>
+              </tr>
+              <tr><th>ChordEdit</th><th>BudEdit</th><th>ChordEdit</th><th>BudEdit</th></tr>
+            </thead>
+            <tbody>
+              <tr><td rowspan="2">PIE-Bench</td><td>SD-Turbo</td><td>22.63</td><td class="cell-second"><strong>24.71</strong></td><td>22.15</td><td class="cell-second"><strong>22.52</strong></td></tr>
+              <tr><td>SwiftBrushV2</td><td>22.93</td><td class="cell-second"><strong>25.49</strong></td><td>21.18</td><td class="cell-second"><strong>21.26</strong></td></tr>
+              <tr><td rowspan="2">PIE-Bench++</td><td>SD-Turbo</td><td>22.87</td><td class="cell-second"><strong>25.06</strong></td><td>24.12</td><td class="cell-second"><strong>24.27</strong></td></tr>
+              <tr><td>SwiftBrushV2</td><td>23.16</td><td class="cell-second"><strong>25.83</strong></td><td>22.46</td><td class="cell-second"><strong>22.70</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figure-caption has-text-centered">
+          <strong>Quantitative comparison on different datasets and backbones.</strong> Blue marks BudEdit.
+        </p>
       </div>
     </div>
   </div>
@@ -380,7 +432,7 @@
     <h2 class="title is-3 has-text-centered">Conclusion</h2>
     <div class="content has-text-justified is-size-6">
       <p>
-        BudEdit identifies uncontrolled spatial energy allocation as a measurable failure mode of one-step diffusion editing, distinct from the temporal instability that prior work has targeted. By converting the total residual energy on the background support into an image-dependent budget, and allocating it via a closed-form information projection over an attention-gated support, BudEdit controls where editing energy is spent rather than only how much of it survives across timesteps. This training-free, inversion-free approach improves on all 11 evaluated PIE-Bench metrics over ChordEdit while reporting the lowest runtime among the compared one-step editors, and the budgeted injection field provably vanishes on the background support it identifies.
+        BudEdit addresses spatially misallocated updates in one-step diffusion editing by converting single-draw background residual energy into an image-dependent budget and re-injecting it into the regions selected jointly by residual energy and cross-attention, with exact injection-budget matching and zero injection on the operational background support. On PIE-Bench, it outperforms the temporal-smoothing approach of ChordEdit on all 11 reported metrics, including a <strong>2.1&nbsp;dB</strong> PSNR gain, at the lowest runtime in the comparison. Together, these results establish explicit spatial energy budgeting as an alternative to temporal smoothing for stable, efficient, controllable one-step editing.
       </p>
     </div>
   </div>
