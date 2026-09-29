@@ -4,8 +4,8 @@
 
 **[Shengxiao Zhou](mailto:shengxiao.zhou@njust.edu.cn)<sup>1</sup> · [Lei Luo](mailto:cslluo@njust.edu.cn)<sup>1,*</sup> · [Jian Yang](mailto:csjyang@nankai.edu.cn)<sup>2</sup>**
 
-<sup>1</sup> PCA Lab, School of Computer Science and Engineering, Nanjing University of Science and Technology
-<sup>2</sup> College of Computer Science, Nankai University
+<sup>1</sup> PCA Lab, School of Computer Science and Engineering, Nanjing University of Science and Technology<br>
+<sup>2</sup> College of Computer Science, Nankai University<br>
 <sup>*</sup> Corresponding author
 
 [![arXiv](https://img.shields.io/badge/arXiv-2609.32841-b31b1b.svg)](https://arxiv.org/abs/2609.32841)
