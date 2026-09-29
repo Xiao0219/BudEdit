@@ -1,6 +1,6 @@
 <div align="center">
 
-# Beyond Temporal Smoothing: Spatial Energy Budgets Stabilize One-Step Diffusion Editing
+# <img src="assets/title.png" alt="Beyond Temporal Smoothing: Spatial Energy Budgets Stabilize One-Step Diffusion Editing" width="72%">
 
 **[Shengxiao Zhou](mailto:shengxiao.zhou@njust.edu.cn)<sup>1</sup> · [Lei Luo](mailto:cslluo@njust.edu.cn)<sup>1,*</sup> · [Jian Yang](mailto:csjyang@nankai.edu.cn)<sup>2</sup>**
 
@@ -12,7 +12,7 @@
 [![Project Page](https://img.shields.io/badge/Project%20Page-xiao0219.github.io%2FBudEdit-5284C8.svg)](https://xiao0219.github.io/BudEdit/)
 ![Code](https://img.shields.io/badge/Code-Coming%20Soon-lightgrey.svg)
 
-<img src="assets/teaser.webp?v=2" alt="BudEdit one-step editing teaser" width="72%">
+<img src="assets/teaser.webp?v=3" alt="BudEdit one-step editing teaser" width="72%">
 
 **One-step editing by BudEdit.** It converts background residual energy into a spatial budget and allocates the constructed injection only to edit-relevant regions for stronger, more coherent edits.
 
