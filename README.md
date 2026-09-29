@@ -16,11 +16,13 @@
 
 **One-step editing by BudEdit.** It converts background residual energy into a spatial budget and allocates the constructed injection only to edit-relevant regions for stronger, more coherent edits.
 
+</div>
+
+## Qualitative Results
+
 <img src="static/images/fig6_comparison.png" alt="Qualitative comparison with one-step editing methods" width="100%">
 
 **Qualitative comparison.** Several baselines exhibit background color shifts, ghosting, or structural distortion, while BudEdit better preserves the source surroundings and produces detailed edits with clean boundaries, retaining the intended edit semantics throughout.
-
-</div>
 
 ## Code
 
