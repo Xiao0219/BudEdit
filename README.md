@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="assets/title.png" alt="Beyond Temporal Smoothing: Spatial Energy Budgets Stabilize One-Step Diffusion Editing" width="72%">
+# <img src="assets/title.png?v=1" alt="Beyond Temporal Smoothing: Spatial Energy Budgets Stabilize One-Step Diffusion Editing" width="85%">
 
 **[Shengxiao Zhou](mailto:shengxiao.zhou@njust.edu.cn)<sup>1</sup> · [Lei Luo](mailto:cslluo@njust.edu.cn)<sup>1,*</sup> · [Jian Yang](mailto:csjyang@nankai.edu.cn)<sup>2</sup>**
 
