@@ -21,3 +21,16 @@
 ## Code
 
 Coming soon. The code will be released here — stay tuned.
+
+## Citation
+
+If you find BudEdit useful for your research, please consider citing:
+
+```bibtex
+@article{zhou2026budedit,
+  title   = {Beyond Temporal Smoothing: Spatial Energy Budgets Stabilize One-Step Diffusion Editing},
+  author  = {Zhou, Shengxiao and Luo, Lei and Yang, Jian},
+  journal = {arXiv preprint arXiv:2609.32841},
+  year    = {2026}
+}
+```
