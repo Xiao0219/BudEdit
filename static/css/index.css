@@ -1321,6 +1321,19 @@ a:focus {
   left: 0;
   clip-path: inset(0 0 100% 0);
 }
+.teaser-wipe-scan {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+}
 .teaser-wipe-instr {
   height: 50px;
   width: auto;

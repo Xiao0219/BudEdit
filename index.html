@@ -89,6 +89,7 @@
                 <div class="teaser-wipe-img-wrap">
                   <img src="static/images/teaser/pair1_src.jpg" alt="Source (base)">
                   <img class="teaser-wipe-target" src="static/images/teaser/pair1_tar.jpg" alt="Edited: panda with open mouth">
+                  <div class="teaser-wipe-scan" aria-hidden="true"></div>
                 </div>
               </div>
               <div class="teaser-wipe-pair" data-idx="1">
@@ -99,6 +100,7 @@
                 <div class="teaser-wipe-img-wrap">
                   <img src="static/images/teaser/pair2_src.jpg" alt="Source (base)">
                   <img class="teaser-wipe-target" src="static/images/teaser/pair2_tar.jpg" alt="Edited: cat with green eyes">
+                  <div class="teaser-wipe-scan" aria-hidden="true"></div>
                 </div>
               </div>
               <div class="teaser-wipe-pair" data-idx="2">
@@ -109,6 +111,7 @@
                 <div class="teaser-wipe-img-wrap">
                   <img src="static/images/teaser/pair3_src.jpg" alt="Source (base)">
                   <img class="teaser-wipe-target" src="static/images/teaser/pair3_tar.jpg" alt="Edited: rabbit on a fence">
+                  <div class="teaser-wipe-scan" aria-hidden="true"></div>
                 </div>
               </div>
             </div>
@@ -125,15 +128,24 @@
 
               function armTarget(pair) {
                 var t = pair.querySelector('.teaser-wipe-target');
+                var s = pair.querySelector('.teaser-wipe-scan');
                 t.style.transition = 'none';
                 t.style.clipPath = 'inset(0 0 100% 0)';
+                s.style.transition = 'none';
+                s.style.top = '0';
+                s.style.opacity = '0';
                 void t.offsetHeight;
                 t.style.transition = 'clip-path 1.4s ease-in-out';
+                s.style.transition = 'top 1.4s ease-in-out, opacity .3s ease';
               }
 
               function revealTarget(pair) {
                 var t = pair.querySelector('.teaser-wipe-target');
+                var s = pair.querySelector('.teaser-wipe-scan');
                 t.style.clipPath = 'inset(0 0 0 0)';
+                s.style.top = 'calc(100% - 3px)';
+                s.style.opacity = '1';
+                setTimeout(function () { s.style.opacity = '0'; }, 1400);
               }
 
               function showOnly(idx) {
